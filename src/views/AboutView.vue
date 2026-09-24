@@ -43,7 +43,7 @@ const nameIdeas = [
           <li><strong>Filters:</strong> role, attribute, melee/ranged — for when the draft needs a support and your heart wants a carry.</li>
           <li><strong>Counter data:</strong> OpenDota matchups show which heroes ruin your pick before you commit.</li>
           <li><strong>Trauma list:</strong> ban a hero from the engine forever (or until you forgive it).</li>
-          <li><strong>Silly extras:</strong> cursed hero of the day, awards, playstyle titles, achievements, excuse generator.</li>
+          <li><strong>Silly extras:</strong> cursed hero of the day, awards, playstyle titles, achievements.</li>
         </ul>
       </section>
 

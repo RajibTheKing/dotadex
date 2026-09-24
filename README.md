@@ -78,7 +78,6 @@ a **danger list** of counters.
 - 🎭 **Playstyle title** — e.g. *Agility Gremlin · Escape*, derived from your attribute/role mix.
 - 🎖️ **Achievements** with progress (First Roll, Roulette Veteran, Explorer of the Roster, Purist,
   Trauma Surgeon, Second Lap).
-- 🗣️ **Excuse generator** — post-loss all-chat material.
 - 🧠 **Coach’s corner** quips, rotating roll-button labels, dex ranks (Larva → Completionist).
 - 📋 **Copy for the party** — share your assignment with your teammates.
 - 📚 Suggestion history, dodge counts and an OpenDota rate-limit meter.
@@ -123,7 +122,7 @@ src/
   api/opendota.ts        # typed fetch client + rate-limit capture + caching
   components/            # AppHeader, PlayerCard, HeroTile/Portrait, FilterBar, SuggestionCard,
                          # QueueList, RollReveal, AwardGrid, ProgressRing, ConnectPlayer,
-                         # ExcuseGenerator, ToastHost
+                         # ToastHost
   composables/           # useToast, useDailyHero
   router/index.ts        # /, /suggest, /dex, /stats, /about
   stores/                # player, roster, dex (queue/bans/counters/history)

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import AwardGrid from '@/components/AwardGrid.vue'
-import ExcuseGenerator from '@/components/ExcuseGenerator.vue'
 import HeroPortrait from '@/components/HeroPortrait.vue'
 import ProgressRing from '@/components/ProgressRing.vue'
 import { rateLimit } from '@/api/opendota'
@@ -300,9 +299,6 @@ const unlockedCount = computed(
           </tbody>
         </table>
       </section>
-
-      <ExcuseGenerator />
-
     </template>
   </div>
 </template>

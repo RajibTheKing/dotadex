@@ -1,6 +1,6 @@
 /**
- * The silly part of DotaDex: flavour text, awards, playstyle titles,
- * dex ranks and the excuse generator.
+ * The silly part of DotaDex: flavour text, awards, playstyle titles
+ * and dex ranks.
  */
 
 import type { HeroMetaStats, PlayerHero } from '@/types/opendota'
@@ -40,19 +40,6 @@ export const CURSED_NOTES: string[] = [
   'Do not question the cursed hero. Play the cursed hero.',
   'Same hero, all day. That is the arrangement.',
   'Fate has a lane assignment for you today.',
-]
-
-export const EXCUSES: string[] = [
-  'The creeps aggro\u2019d me. Check the replay.',
-  'My mouse double-clicked. Twice. On my own hero.',
-  'The internet was doing a thing.',
-  'I was casting. Yes, on the ground. On purpose.',
-  'The enemy support was camping. That is basically cheating.',
-  'I was baiting. The team did not take the bait. Communication issue.',
-  'My upgrade finished mid-fight. Real life has bad timing.',
-  'I was checking winrates and forgot to play.',
-  'Someone stepped on my keyboard. Possibly me. Unexplained.',
-  'It was a smoke play. Everyone else was smoking.',
 ]
 
 export const ROLL_BUTTON_LABELS: string[] = [

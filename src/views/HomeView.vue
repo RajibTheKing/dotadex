@@ -6,7 +6,6 @@ import PlayerCard from '@/components/PlayerCard.vue'
 import HeroTile from '@/components/HeroTile.vue'
 import HeroPortrait from '@/components/HeroPortrait.vue'
 import AwardGrid from '@/components/AwardGrid.vue'
-import ExcuseGenerator from '@/components/ExcuseGenerator.vue'
 import { useDailyHero } from '@/composables/useDailyHero'
 import { useDexStore } from '@/stores/dex'
 import { usePlayerStore } from '@/stores/player'
@@ -156,7 +155,6 @@ function openHero(hero: HeroMetaStats): void {
     </section>
 
     <div class="grid-2">
-      <ExcuseGenerator />
       <section class="panel">
         <div class="panel-title">🧭 How the anti-repeat rule works</div>
         <ol class="reason-list">
