@@ -15,7 +15,7 @@
 import type { HeroMetaStats } from '@/types/opendota'
 
 /** How many heroes the strip always tries to show. */
-export const FRESH_FACES_COUNT = 10
+export const FRESH_FACES_COUNT = 30
 
 /** A hero whose last game is inside this window counts as recently played. */
 export const FRESH_WINDOW_DAYS = 7

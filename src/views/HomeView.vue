@@ -61,6 +61,65 @@ function openHero(hero: HeroMetaStats): void {
 
     <PlayerCard v-if="player.profile" />
 
+    <section v-if="player.profile" class="panel">
+      <div class="panel-title">📉 Recent form (last {{ player.recentResults.length }})</div>
+      <p class="tiny muted">
+        <template v-if="player.recentWinrate !== null">
+          {{ formatPercent(player.recentWinrate) }} winrate lately.
+        </template>
+        <template v-else>No recent matches on record.</template>
+      </p>
+      <div class="form-strip">
+        <span
+          v-for="match in player.recentResults"
+          :key="match.matchId"
+          class="form-chip"
+          :class="match.won ? 'win' : 'loss'"
+          :title="`${roster.heroName(match.heroId)} · ${match.kills}/${match.deaths}/${match.assists}`"
+        >
+          <img
+            :src="heroIconUrl(roster.heroById(match.heroId) ?? null)"
+            :alt="roster.heroName(match.heroId)"
+          />
+        </span>
+      </div>
+      <p class="tiny muted" style="margin-top: 10px">
+        Playstyle: <strong :style="{ color: playstyle.color }">{{ playstyle.title }}</strong> —
+        {{ playstyle.blurb }}
+      </p>
+    </section>
+
+    <section v-if="player.profile" class="panel">
+      <div class="panel-title">🆕 Fresh faces for today</div>
+      <p v-if="dailyUntouched.length > 0" class="tiny muted">
+        {{ dailyUntouched.length }} heroes with no game in the last {{ FRESH_WINDOW_DAYS }} days —
+        anything you played recently is kept out of this row.
+      </p>
+      <p v-if="dailyUntouched.length === 0" class="muted tiny">
+        <template v-if="dailyEmptyReason === 'complete'">
+          Every hero in the roster has been played. Unbelievable. Go touch grass, then come back for
+          cycle {{ dex.cycle + 1 }}.
+        </template>
+        <template v-else>
+          Every hero was played in the last {{ FRESH_WINDOW_DAYS }} days, so nothing is stale enough
+          to offer. Rotate a few cold heroes and this row fills straight back up.
+        </template>
+      </p>
+      <div v-else class="hero-grid">
+        <HeroTile
+          v-for="hero in dailyUntouched"
+          :key="hero.id"
+          :hero="hero"
+          :record="player.recordById.get(hero.id) ?? null"
+          :locally-played="player.locallyOnlyPlayedIds.includes(hero.id)"
+          :banned="dex.isBanned(hero.id)"
+          :suggested="dex.seenIds.includes(hero.id)"
+          :skips="dex.queue.find((entry) => entry.heroId === hero.id)?.skips ?? 0"
+          @select="openHero"
+        />
+      </div>
+    </section>
+
     <div v-if="player.profile" class="grid-2">
       <section class="panel">
         <div class="panel-title">🎲 Your next match</div>
@@ -97,67 +156,6 @@ function openHero(hero: HeroMetaStats): void {
             </p>
           </div>
         </div>
-      </section>
-    </div>
-
-    <div v-if="player.profile" class="grid-2">
-      <section class="panel">
-        <div class="panel-title">🆕 Fresh faces for today</div>
-        <p v-if="dailyUntouched.length > 0" class="tiny muted">
-          {{ dailyUntouched.length }} heroes with no game in the last {{ FRESH_WINDOW_DAYS }} days —
-          anything you played recently is kept out of this row.
-        </p>
-        <p v-if="dailyUntouched.length === 0" class="muted tiny">
-          <template v-if="dailyEmptyReason === 'complete'">
-            Every hero in the roster has been played. Unbelievable. Go touch grass, then come back for
-            cycle {{ dex.cycle + 1 }}.
-          </template>
-          <template v-else>
-            Every hero was played in the last {{ FRESH_WINDOW_DAYS }} days, so nothing is stale enough
-            to offer. Rotate a few cold heroes and this row fills straight back up.
-          </template>
-        </p>
-        <div v-else class="hero-grid">
-          <HeroTile
-            v-for="hero in dailyUntouched"
-            :key="hero.id"
-            :hero="hero"
-            :record="player.recordById.get(hero.id) ?? null"
-            :locally-played="player.locallyOnlyPlayedIds.includes(hero.id)"
-            :banned="dex.isBanned(hero.id)"
-            :suggested="dex.seenIds.includes(hero.id)"
-            :skips="dex.queue.find((entry) => entry.heroId === hero.id)?.skips ?? 0"
-            @select="openHero"
-          />
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-title">📉 Recent form (last {{ player.recentResults.length }})</div>
-        <p class="tiny muted">
-          <template v-if="player.recentWinrate !== null">
-            {{ formatPercent(player.recentWinrate) }} winrate lately.
-          </template>
-          <template v-else>No recent matches on record.</template>
-        </p>
-        <div class="form-strip">
-          <span
-            v-for="match in player.recentResults"
-            :key="match.matchId"
-            class="form-chip"
-            :class="match.won ? 'win' : 'loss'"
-            :title="`${roster.heroName(match.heroId)} · ${match.kills}/${match.deaths}/${match.assists}`"
-          >
-            <img
-              :src="heroIconUrl(roster.heroById(match.heroId) ?? null)"
-              :alt="roster.heroName(match.heroId)"
-            />
-          </span>
-        </div>
-        <p class="tiny muted" style="margin-top: 10px">
-          Playstyle: <strong :style="{ color: playstyle.color }">{{ playstyle.title }}</strong> —
-          {{ playstyle.blurb }}
-        </p>
       </section>
     </div>
 

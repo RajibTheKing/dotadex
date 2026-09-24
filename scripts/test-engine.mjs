@@ -248,21 +248,21 @@ check('ability draft row exists', rowFor(18).games === 1 && rowFor(18).win === 0
 check('rows sort by games desc', breakdown.map((row) => row.gameModeId).join(',') === '22,23,18')
 
 /* ------------------------------------------------------------------ *
- * Fresh faces: always >= 10 heroes, and never one you just played.
+ * Fresh faces: always >= 30 heroes (or available pool), and never one you just played.
  * ------------------------------------------------------------------ */
 
 console.log('\nFresh faces picker\n')
 
 const NOW = 1_800_000_000
 const DAY = 86_400
-const freshRoster = Array.from({ length: 30 }, (_, index) => ({ id: index + 1 }))
+const freshRoster = Array.from({ length: 50 }, (_, index) => ({ id: index + 1 }))
 const freshLastPlayed = new Map([
   [4, NOW - 1 * DAY], // played yesterday -> too recent
   [5, NOW - 3 * DAY], // played this week -> too recent
   [6, NOW - 16 * DAY], // stale by date, but still sitting in the last 20 matches
 ])
-for (let id = 7; id <= 30; id += 1) {
-  freshLastPlayed.set(id, NOW - (10 + id) * DAY) // 17d .. 40d ago
+for (let id = 7; id <= 50; id += 1) {
+  freshLastPlayed.set(id, NOW - (10 + id) * DAY) // 17d .. 60d ago
 }
 const freshPlayedIds = new Set(freshRoster.map((hero) => hero.id).filter((id) => id > 3))
 const freshOptions = {
@@ -271,9 +271,11 @@ const freshOptions = {
   recentHeroIds: [6],
   now: NOW,
 }
-const staleBlock = '30,29,28,27,26,25,24'
+// 3 untouched heroes (1, 2, 3), then 27 stale heroes ordered by last game oldest first (id 50 down to 24)
+const staleHeroes = Array.from({ length: 27 }, (_, i) => 50 - i)
+const staleBlock = staleHeroes.join(',')
 
-check('the strip always aims for 10 heroes', FRESH_FACES_COUNT === 10, `${FRESH_FACES_COUNT}`)
+check('the strip always aims for 30 heroes', FRESH_FACES_COUNT === 30, `${FRESH_FACES_COUNT}`)
 check('the recent window is a week', FRESH_WINDOW_DAYS === 7, `${FRESH_WINDOW_DAYS}`)
 
 const faces = pickFreshFaces(freshRoster, {
