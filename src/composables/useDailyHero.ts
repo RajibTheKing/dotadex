@@ -3,6 +3,7 @@ import { useRosterStore } from '@/stores/roster'
 import { usePlayerStore } from '@/stores/player'
 import { hashSeed, seededRandom } from '@/utils/suggest'
 import { CURSED_NOTES, pickRandom } from '@/utils/fun'
+import { pickFreshFaces } from '@/utils/fresh'
 
 /**
  * "Cursed Hero of the Day" - deterministic per player + calendar day, so it
@@ -20,17 +21,28 @@ export function useDailyHero() {
     return roster.heroes[Math.floor(rng() * roster.heroes.length)] ?? null
   })
 
-  /** A fresh-looking slice of untouched heroes for the day. */
-  const dailyUntouched = computed(() => {
-    const pool = player.neverPlayed
-    if (pool.length === 0) return []
-    const rng = seededRandom(hashSeed(`${seedBase}:untouched`))
-    const shuffled = [...pool]
-    for (let i = shuffled.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(rng() * (i + 1))
-      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-    }
-    return shuffled.slice(0, 8)
+  /**
+   * "Fresh faces for today" - always FRESH_FACES_COUNT heroes that have gone
+   * stale. Never-played heroes lead (still shuffled daily), then the played
+   * heroes whose last game is oldest. Anything played inside FRESH_WINDOW_DAYS,
+   * or still sitting in the last 20 matches, is kept out so a hero you just
+   * picked never turns up here.
+   */
+  const dailyUntouched = computed(() =>
+    pickFreshFaces(roster.heroes, {
+      playedIds: player.playedIds,
+      lastPlayedOf: (heroId) => player.recordById.get(heroId)?.last_played ?? 0,
+      recentHeroIds: player.recentResults.map((match) => match.heroId),
+      now: Date.now(),
+      rng: seededRandom(hashSeed(`${seedBase}:untouched`)),
+    }),
+  )
+
+  /** Why the strip is empty - there is always a reason, even a smug one. */
+  const dailyEmptyReason = computed<'complete' | 'all-recent' | null>(() => {
+    if (dailyUntouched.value.length > 0) return null
+    if (roster.heroes.length > 0 && player.playedIds.size >= roster.heroes.length) return 'complete'
+    return 'all-recent'
   })
 
   const cursedNote = computed(() => {
@@ -38,5 +50,5 @@ export function useDailyHero() {
     return pickRandom(CURSED_NOTES, rng)
   })
 
-  return { dayKey, cursedHero, cursedNote, dailyUntouched }
+  return { dayKey, cursedHero, cursedNote, dailyUntouched, dailyEmptyReason }
 }

@@ -11,6 +11,7 @@ import { useDexStore } from '@/stores/dex'
 import { usePlayerStore } from '@/stores/player'
 import { useRosterStore } from '@/stores/roster'
 import { computeAwards, dexRank, playstyleTitle } from '@/utils/fun'
+import { FRESH_WINDOW_DAYS } from '@/utils/fresh'
 import { formatPercent, heroIconUrl } from '@/utils/heroes'
 import type { HeroMetaStats } from '@/types/opendota'
 
@@ -18,7 +19,7 @@ const player = usePlayerStore()
 const roster = useRosterStore()
 const dex = useDexStore()
 const router = useRouter()
-const { cursedHero, cursedNote, dailyUntouched, dayKey } = useDailyHero()
+const { cursedHero, cursedNote, dailyUntouched, dailyEmptyReason, dayKey } = useDailyHero()
 
 const awards = computed(() => computeAwards(roster.heroes, player.heroRecords, dex.markedPlayed))
 const awardTeaser = computed(() => awards.value.slice(0, 4))
@@ -102,16 +103,30 @@ function openHero(hero: HeroMetaStats): void {
     <div v-if="player.profile" class="grid-2">
       <section class="panel">
         <div class="panel-title">🆕 Fresh faces for today</div>
+        <p v-if="dailyUntouched.length > 0" class="tiny muted">
+          {{ dailyUntouched.length }} heroes with no game in the last {{ FRESH_WINDOW_DAYS }} days —
+          anything you played recently is kept out of this row.
+        </p>
         <p v-if="dailyUntouched.length === 0" class="muted tiny">
-          Every hero in the roster has been played. Unbelievable. Go touch grass, then come back for
-          cycle {{ dex.cycle + 1 }}.
+          <template v-if="dailyEmptyReason === 'complete'">
+            Every hero in the roster has been played. Unbelievable. Go touch grass, then come back for
+            cycle {{ dex.cycle + 1 }}.
+          </template>
+          <template v-else>
+            Every hero was played in the last {{ FRESH_WINDOW_DAYS }} days, so nothing is stale enough
+            to offer. Rotate a few cold heroes and this row fills straight back up.
+          </template>
         </p>
         <div v-else class="hero-grid">
           <HeroTile
             v-for="hero in dailyUntouched"
             :key="hero.id"
             :hero="hero"
+            :record="player.recordById.get(hero.id) ?? null"
+            :locally-played="player.locallyOnlyPlayedIds.includes(hero.id)"
             :banned="dex.isBanned(hero.id)"
+            :suggested="dex.seenIds.includes(hero.id)"
+            :skips="dex.queue.find((entry) => entry.heroId === hero.id)?.skips ?? 0"
             @select="openHero"
           />
         </div>

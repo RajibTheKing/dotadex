@@ -16,6 +16,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const outputDir = join(root, 'node_modules', '.dotadex-test')
 const outputFile = join(outputDir, 'suggest.mjs')
 const statsOutputFile = join(outputDir, 'stats.mjs')
+const freshOutputFile = join(outputDir, 'fresh.mjs')
 
 await mkdir(outputDir, { recursive: true })
 const bundleOptions = {
@@ -35,12 +36,20 @@ await build({
   entryPoints: [join(root, 'src', 'utils', 'stats.ts')],
   outfile: statsOutputFile,
 })
+await build({
+  ...bundleOptions,
+  entryPoints: [join(root, 'src', 'utils', 'fresh.ts')],
+  outfile: freshOutputFile,
+})
 
 const { suggestHeroes, seededRandom, hashSeed, rouletteStrip, worstMatchupsFor } = await import(
   pathToFileURL(outputFile).href
 )
 const { didPlayerWin, unrecountedRecentMatches, mergeHeroRecords, mergeWl, buildModeBreakdown } =
   await import(pathToFileURL(statsOutputFile).href)
+const { pickFreshFaces, FRESH_FACES_COUNT, FRESH_WINDOW_DAYS } = await import(
+  pathToFileURL(freshOutputFile).href
+)
 
 let failures = 0
 function check(label, condition, extra = '') {
@@ -237,6 +246,86 @@ check('turbo row is flagged recent-only', rowFor(23).recentOnly === true && rowF
 check('turbo row records both sides', rowFor(23).win === 1 && rowFor(23).lose === 1 && rowFor(23).winrate === 50)
 check('ability draft row exists', rowFor(18).games === 1 && rowFor(18).win === 0)
 check('rows sort by games desc', breakdown.map((row) => row.gameModeId).join(',') === '22,23,18')
+
+/* ------------------------------------------------------------------ *
+ * Fresh faces: always >= 10 heroes, and never one you just played.
+ * ------------------------------------------------------------------ */
+
+console.log('\nFresh faces picker\n')
+
+const NOW = 1_800_000_000
+const DAY = 86_400
+const freshRoster = Array.from({ length: 30 }, (_, index) => ({ id: index + 1 }))
+const freshLastPlayed = new Map([
+  [4, NOW - 1 * DAY], // played yesterday -> too recent
+  [5, NOW - 3 * DAY], // played this week -> too recent
+  [6, NOW - 16 * DAY], // stale by date, but still sitting in the last 20 matches
+])
+for (let id = 7; id <= 30; id += 1) {
+  freshLastPlayed.set(id, NOW - (10 + id) * DAY) // 17d .. 40d ago
+}
+const freshPlayedIds = new Set(freshRoster.map((hero) => hero.id).filter((id) => id > 3))
+const freshOptions = {
+  playedIds: freshPlayedIds,
+  lastPlayedOf: (heroId) => freshLastPlayed.get(heroId) ?? 0,
+  recentHeroIds: [6],
+  now: NOW,
+}
+const staleBlock = '30,29,28,27,26,25,24'
+
+check('the strip always aims for 10 heroes', FRESH_FACES_COUNT === 10, `${FRESH_FACES_COUNT}`)
+check('the recent window is a week', FRESH_WINDOW_DAYS === 7, `${FRESH_WINDOW_DAYS}`)
+
+const faces = pickFreshFaces(freshRoster, {
+  ...freshOptions,
+  rng: seededRandom(hashSeed('fresh-faces-test')),
+})
+check('always hands back the full set', faces.length === FRESH_FACES_COUNT, `got ${faces.length}`)
+check(
+  'never-played heroes lead the strip',
+  faces.slice(0, 3).every((hero) => hero.id <= 3),
+  JSON.stringify(faces.slice(0, 3).map((hero) => hero.id)),
+)
+check(
+  'stale heroes follow, oldest game first',
+  faces.slice(3).map((hero) => hero.id).join(',') === staleBlock,
+  faces.slice(3).map((hero) => hero.id).join(','),
+)
+check('hero played yesterday is left out', faces.every((hero) => hero.id !== 4 && hero.id !== 5))
+check('hero from the last 20 matches is left out', faces.every((hero) => hero.id !== 6))
+
+const facesOtherDay = pickFreshFaces(freshRoster, {
+  ...freshOptions,
+  rng: seededRandom(hashSeed('another-day')),
+})
+check(
+  'untouched heroes still lead on a different day',
+  facesOtherDay.slice(0, 3).every((hero) => hero.id <= 3),
+  JSON.stringify(facesOtherDay.slice(0, 3).map((hero) => hero.id)),
+)
+check(
+  'stale block is stable across days',
+  facesOtherDay.slice(3).map((hero) => hero.id).join(',') === staleBlock,
+  facesOtherDay.slice(3).map((hero) => hero.id).join(','),
+)
+
+const tiny = pickFreshFaces([{ id: 1 }, { id: 2 }, { id: 3 }], {
+  playedIds: new Set(),
+  lastPlayedOf: () => 0,
+  recentHeroIds: [],
+  now: NOW,
+  rng: seededRandom(hashSeed('tiny')),
+})
+check('returns everything when the roster is smaller than the target', tiny.length === 3, `got ${tiny.length}`)
+
+const noStaleLeft = pickFreshFaces(freshRoster, {
+  playedIds: new Set(freshRoster.map((hero) => hero.id)),
+  lastPlayedOf: () => NOW - 1 * DAY,
+  recentHeroIds: [],
+  now: NOW,
+  rng: seededRandom(hashSeed('no-stale')),
+})
+check('empty strip when every hero was played this week', noStaleLeft.length === 0, `got ${noStaleLeft.length}`)
 
 await rm(outputDir, { recursive: true, force: true })
 
