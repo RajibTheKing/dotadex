@@ -25,6 +25,7 @@ watch(src, () => {
 <template>
   <img
     v-if="src && !failed"
+    class="portrait-img"
     :src="src"
     :alt="alt || hero?.localized_name || 'hero portrait'"
     loading="lazy"
