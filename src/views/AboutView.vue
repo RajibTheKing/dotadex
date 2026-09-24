@@ -6,7 +6,7 @@ import { useDexStore } from '@/stores/dex'
 const dex = useDexStore()
 
 const nameIdeas = [
-  { name: 'DotaDex', blurb: 'The one we shipped: a Pokédex for the Dota roster. “Gotta play ’em all.”' },
+  { name: 'DotaDex', blurb: 'The one we shipped: a Pokédex for the Dota roster. One favorite per hero slot.' },
   { name: 'Hero Roulette', blurb: 'Honest about what it does. Says nothing about the trauma.' },
   { name: 'Roshan’s Roulette', blurb: 'Same thing, but with an angry bear branding.' },
   { name: 'Fifth Pick Prophet', blurb: 'For the player who always has to fill the last slot.' },

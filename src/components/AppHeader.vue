@@ -51,7 +51,6 @@ function resetData(): void {
         <span class="brand-mark">◈</span>
         <span>
           <strong>DotaDex</strong>
-          <span class="tiny muted"> gotta play ’em all</span>
         </span>
       </RouterLink>
 

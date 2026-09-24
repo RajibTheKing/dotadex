@@ -34,7 +34,7 @@ function openHero(hero: HeroMetaStats): void {
 <template>
   <div class="stack">
     <section class="panel gold hero-banner">
-      <h1>🎯 DotaDex <span class="muted" style="font-size: 0.6em">gotta play ’em all</span></h1>
+      <h1>🎯 DotaDex</h1>
       <p class="muted" style="max-width: 760px">
         Enter your Dota account and DotaDex turns OpenDota data into a hero-collection tracker plus a
         match-by-match suggestion engine: it only hands you heroes you have never played, and it never

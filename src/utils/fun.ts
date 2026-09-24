@@ -64,7 +64,6 @@ export const ROLL_BUTTON_LABELS: string[] = [
 ]
 
 export const DEX_BADGES: string[] = [
-  'Gotta play \u2019em all.',
   'No hero left behind.',
   'Variety is the only stat that matters.',
 ]

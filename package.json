@@ -2,7 +2,7 @@
   "name": "dotadex",
   "version": "0.1.0",
   "private": true,
-  "description": "DotaDex - Gotta play 'em all. A Dota 2 hero collection tracker and match suggestion assistant.",
+  "description": "DotaDex - A Dota 2 hero collection tracker and match suggestion assistant.",
   "type": "module",
   "scripts": {
     "dev": "vite",

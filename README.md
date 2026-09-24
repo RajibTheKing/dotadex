@@ -1,4 +1,4 @@
-# 🎯 DotaDex — *gotta play ’em all*
+# 🎯 DotaDex
 
 A small Vue 3 web app that pulls a Dota 2 profile from the [OpenDota API](https://docs.opendota.com/)
 and turns it into a **hero collection tracker** (a Pokédex for the roster) plus a **match-to-match
