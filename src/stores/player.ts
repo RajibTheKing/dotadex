@@ -2,14 +2,27 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import {
   fetchPlayer,
+  fetchPlayerCounts,
   fetchPlayerHeroes,
   fetchPlayerWL,
   fetchRecentMatches,
 } from '@/api/opendota'
-import type { PlayerHero, PlayerSummary, PlayerWL, RecentMatch } from '@/types/opendota'
+import type {
+  PlayerCounts,
+  PlayerHero,
+  PlayerSummary,
+  PlayerWL,
+  RecentMatch,
+} from '@/types/opendota'
 import { useDexStore } from '@/stores/dex'
 import { useRosterStore } from '@/stores/roster'
 import { rankTierToBracket, winRatePercent } from '@/utils/heroes'
+import {
+  buildModeBreakdown,
+  mergeHeroRecords,
+  mergeWl,
+  unrecountedRecentMatches,
+} from '@/utils/stats'
 
 /**
  * Everything OpenDota knows about the connected player, plus the derived dex
@@ -20,19 +33,47 @@ export const usePlayerStore = defineStore('player', () => {
   const roster = useRosterStore()
 
   const summary = ref<PlayerSummary | null>(null)
-  const heroRecords = ref<PlayerHero[]>([])
-  const wl = ref<PlayerWL | null>(null)
+  /** Raw /heroes payload - the all-mode extras are folded in below. */
+  const heroRecordsRaw = ref<PlayerHero[]>([])
+  /** Raw /wl payload - the all-mode extras are folded in below. */
+  const wlRaw = ref<PlayerWL | null>(null)
+  /** Raw /counts payload, used to spot the modes OpenDota never aggregates. */
+  const counts = ref<PlayerCounts | null>(null)
   const recent = ref<RecentMatch[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
   const loadedAt = ref<number | null>(null)
+
+  /**
+   * Fallback safety net, normally empty: recent matches the lifetime endpoints
+   * still failed to count (Turbo, Ability Draft and friends). The app asks for
+   * every mode with `significant=0`, so `/counts` normally lists them all and
+   * this stays at zero; if OpenDota ever stops honouring the flag, whatever
+   * `/recentMatches` can see is folded back into the dex, the awards and the
+   * suggestion engine instead.
+   */
+  const extraMatches = computed(() => unrecountedRecentMatches(counts.value, recent.value))
+  /** Per-hero records including the extra all-mode matches. */
+  const heroRecords = computed(() => mergeHeroRecords(heroRecordsRaw.value, extraMatches.value))
+  /** Lifetime win/loss including the extra all-mode matches. */
+  const wl = computed(() => mergeWl(wlRaw.value, extraMatches.value))
+  /** Games per game mode: OpenDota's own aggregates plus the modes it drops. */
+  const modeBreakdown = computed(() => buildModeBreakdown(counts.value, extraMatches.value))
 
   const accountId = computed(() => dex.accountId)
   const isConnected = computed(() => summary.value !== null && summary.value.profile.account_id === dex.accountId)
   const profile = computed(() => summary.value?.profile ?? null)
   const bracket = computed(() => rankTierToBracket(summary.value?.rank_tier ?? null))
   const recordById = computed(() => new Map(heroRecords.value.map((record) => [record.hero_id, record])))
-  const totalGames = computed(() => heroRecords.value.reduce((sum, record) => sum + record.games, 0))
+  /**
+   * Games tracked. Prefers the win/loss total so the badges always add up -
+   * /heroes can be a handful short because some matches are stored without a
+   * hero_id and can never be attributed to a hero.
+   */
+  const totalGames = computed(() => {
+    if (wl.value) return wl.value.win + wl.value.lose
+    return heroRecords.value.reduce((sum, record) => sum + record.games, 0)
+  })
   const winrate = computed(() => {
     if (!wl.value) return null
     return winRatePercent(wl.value.win, wl.value.win + wl.value.lose)
@@ -85,20 +126,23 @@ export const usePlayerStore = defineStore('player', () => {
     error.value = null
     try {
       const options = force ? { noCache: true } : {}
-      const [player, heroes, winLose, matches] = await Promise.all([
+      const [player, heroes, winLose, matches, countsByMode] = await Promise.all([
         fetchPlayer(id, options),
         fetchPlayerHeroes(id, options),
         fetchPlayerWL(id, options).catch(() => null),
         fetchRecentMatches(id, options).catch(() => [] as RecentMatch[]),
+        fetchPlayerCounts(id, options).catch(() => null),
       ])
       summary.value = player
-      heroRecords.value = heroes
-      wl.value = winLose
+      heroRecordsRaw.value = heroes
+      wlRaw.value = winLose
       recent.value = matches
+      counts.value = countsByMode
       loadedAt.value = Date.now()
     } catch (caught) {
       summary.value = null
-      heroRecords.value = []
+      heroRecordsRaw.value = []
+      counts.value = null
       error.value =
         caught instanceof Error
           ? caught.message
@@ -111,15 +155,17 @@ export const usePlayerStore = defineStore('player', () => {
   async function connect(id: number): Promise<void> {
     dex.setAccountId(id)
     summary.value = null
-    heroRecords.value = []
+    heroRecordsRaw.value = []
+    counts.value = null
     await load(true)
   }
 
   function disconnect(): void {
     dex.setAccountId(null)
     summary.value = null
-    heroRecords.value = []
-    wl.value = null
+    heroRecordsRaw.value = []
+    wlRaw.value = null
+    counts.value = null
     recent.value = []
     error.value = null
     loadedAt.value = null
@@ -129,6 +175,9 @@ export const usePlayerStore = defineStore('player', () => {
     summary,
     heroRecords,
     wl,
+    counts,
+    extraMatches,
+    modeBreakdown,
     recent,
     loading,
     error,

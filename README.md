@@ -91,6 +91,7 @@ a **danger list** of counters.
 | `GET /players/{id}` | profile, rank tier, MMR |
 | `GET /players/{id}/heroes` | games/winrate per hero → dex status |
 | `GET /players/{id}/wl` | lifetime win/loss |
+| `GET /players/{id}/counts` | per-mode/per-patch lifetime counts → the all-mode merge |
 | `GET /players/{id}/recentMatches` | recent form strip + match table |
 | `GET /heroes/{id}/matchups` | counters (cached 24 h) |
 | `GET /search?q=` | find a player by nickname |
@@ -98,6 +99,18 @@ a **danger list** of counters.
 
 Rate limits are roughly **60 requests/minute and 2 000/day**. Responses are cached in memory (and
 `localStorage` for the large ones), and the remaining quota is shown on the stats page.
+
+> **Turbo / all-modes note.** OpenDota runs every lifetime endpoint through an `isSignificant()`
+> check that rejects any match whose `game_mode`/`lobby_type` is not marked "balanced" — exactly
+> where Turbo (23), Ability Draft (18) and the event modes live. The defaults therefore report only
+> normal + ranked games: a **20 000-Turbo-game account showed up as 278 matches**. DotaDex sends
+> `significant=0` on `/wl`, `/heroes` and `/counts` to switch that filter off, which brings every
+> mode back at full depth (the same account now reports 20 595). That flag also lets in a few
+> matches with no recorded winner or hero, so totals can differ by a handful of games. As a
+> fallback, `/counts` is used to spot any mode OpenDota still omits and fold in whatever
+> `/recentMatches` (the one endpoint that never filters) can supply — those rows are flagged
+> **"last 20 matches"** in the *Games by mode* table, and the merge is skipped entirely if
+> `/counts` fails so nothing can be double counted.
 
 Account input accepts a raw `account_id`, a **SteamID64** (`7656119…`), or an
 `opendota.com/players/<id>` / `steamcommunity.com/profiles/<id>` URL. Vanity URLs (`/id/name`) need the
@@ -114,8 +127,8 @@ src/
   composables/           # useToast, useDailyHero
   router/index.ts        # /, /suggest, /dex, /stats, /about
   stores/                # player, roster, dex (queue/bans/counters/history)
-  utils/                 # suggest.ts (engine), fun.ts (silly bits), heroes.ts, filters.ts,
-                         # account.ts, storage.ts
+  utils/                 # suggest.ts (engine), stats.ts (all-mode merge), fun.ts (silly bits),
+                         # heroes.ts, filters.ts, account.ts, storage.ts
   views/                 # HomeView, SuggestView, DexView, StatsView, AboutView
 ```
 

@@ -14,6 +14,13 @@ const toast = useToast()
 const profile = computed(() => player.profile)
 const rank = computed(() => rankLabel(player.summary?.rank_tier ?? null))
 const rankTitle = computed(() => dexRank(player.completion))
+/** Human-readable list of the modes OpenDota left out of its lifetime totals. */
+const extraModeNames = computed(
+  () =>
+    [...new Set(player.extraMatches.map((match) => roster.gameModeName(match.game_mode)))]
+      .sort()
+      .join(' / '),
+)
 
 async function refresh(): Promise<void> {
   await player.load(true)
@@ -51,10 +58,21 @@ function disconnect(): void {
             <span v-if="player.winrate !== null" class="badge">
               {{ formatPercent(player.winrate) }} lifetime
             </span>
+            <span
+              class="badge new"
+              title="Turbo, Ability Draft, event modes and everything else are counted. OpenDota hides them behind its 'significant matches' filter by default; DotaDex asks for them with significant=0."
+            >
+              🎮 all modes
+            </span>
           </div>
           <p class="tiny muted" style="margin: 8px 0 0">
             Account {{ profile.account_id }} · dex rank {{ rankTitle.emoji }} {{ rankTitle.title }} ·
             {{ player.neverPlayed.length }} heroes still untouched (out of {{ roster.heroes.length }}).
+            <span v-if="player.extraMatches.length > 0">
+              Totals cover every game mode: {{ player.extraMatches.length }} recent
+              {{ extraModeNames }} match{{ player.extraMatches.length === 1 ? '' : 'es' }} that
+              OpenDota omits from its lifetime stats were folded in.
+            </span>
           </p>
         </div>
         <ProgressRing :percent="player.completion" :size="128" label="dex complete" />

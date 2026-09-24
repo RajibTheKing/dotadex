@@ -48,6 +48,22 @@ export interface PlayerWL {
   lose: number
 }
 
+/** GET /players/{account_id}/counts - one bucket per value of a grouping field. */
+export interface PlayerCountsBucket {
+  games: number
+  win: number
+}
+
+/**
+ * GET /players/{account_id}/counts, e.g. `counts.game_mode["22"]` -> games/win.
+ *
+ * OpenDota never lists Turbo (game_mode 23), Ability Draft (18) or the other
+ * unbalanced modes here: its lifetime endpoints skip them entirely, while
+ * /recentMatches does return them. See src/utils/stats.ts for how DotaDex
+ * folds that sliver of all-mode data back into the totals.
+ */
+export type PlayerCounts = Record<string, Record<string, PlayerCountsBucket>>
+
 /** GET /players/{account_id}/recentMatches */
 export interface RecentMatch {
   match_id: number

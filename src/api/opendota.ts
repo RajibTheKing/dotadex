@@ -3,6 +3,7 @@ import type {
   GameModeConstant,
   HeroMatchup,
   HeroMetaStats,
+  PlayerCounts,
   PlayerHero,
   PlayerSummary,
   PlayerWL,
@@ -140,15 +141,51 @@ export function fetchPlayer(accountId: number, options: GetOptions = {}): Promis
   return get<PlayerSummary>(`/players/${accountId}`, {}, { ttlMs: 2 * MINUTE, ...options })
 }
 
+/**
+ * Query params that switch off OpenDota's "significant matches" filter.
+ *
+ * By default every lifetime endpoint (`/wl`, `/heroes`, `/counts`, `/matches`)
+ * runs through `isSignificant()`, which rejects any match whose `game_mode` or
+ * `lobby_type` is not marked "balanced" in dotaconstants - precisely where
+ * Turbo (23), Ability Draft (18) and the event modes live. A player with 20 000
+ * Turbo games would otherwise report 278 matches. Passing `significant=0`
+ * disables the check so every game mode the player has actually played counts.
+ */
+const ALL_GAME_MODES: Record<string, string | number> = { significant: 0 }
+
 export function fetchPlayerHeroes(
   accountId: number,
   options: GetOptions = {},
 ): Promise<PlayerHero[]> {
-  return get<PlayerHero[]>(`/players/${accountId}/heroes`, {}, { ttlMs: 5 * MINUTE, ...options })
+  return get<PlayerHero[]>(
+    `/players/${accountId}/heroes`,
+    ALL_GAME_MODES,
+    { ttlMs: 5 * MINUTE, ...options },
+  )
 }
 
 export function fetchPlayerWL(accountId: number, options: GetOptions = {}): Promise<PlayerWL> {
-  return get<PlayerWL>(`/players/${accountId}/wl`, {}, { ttlMs: 5 * MINUTE, ...options })
+  return get<PlayerWL>(`/players/${accountId}/wl`, ALL_GAME_MODES, {
+    ttlMs: 5 * MINUTE,
+    ...options,
+  })
+}
+
+/**
+ * Lifetime counts grouped by game mode, lobby type, patch, region, ...
+ *
+ * This is how DotaDex works out which modes OpenDota actually aggregates: Turbo
+ * (23), Ability Draft (18) and the other unbalanced modes never appear here, so
+ * a recent match in one of them was never counted by /wl or /heroes either.
+ */
+export function fetchPlayerCounts(
+  accountId: number,
+  options: GetOptions = {},
+): Promise<PlayerCounts> {
+  return get<PlayerCounts>(`/players/${accountId}/counts`, ALL_GAME_MODES, {
+    ttlMs: 5 * MINUTE,
+    ...options,
+  })
 }
 
 export function fetchRecentMatches(

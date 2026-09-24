@@ -45,6 +45,7 @@ const attrBreakdown = computed(() => {
 
 const topHeroes = computed(() => player.topHeroes.slice(0, 10))
 const recentRows = computed(() => player.recentResults.slice(0, 20))
+const modeRows = computed(() => player.modeBreakdown)
 
 const achievementStates = computed(() =>
   ACHIEVEMENTS.map((achievement) => ({
@@ -224,6 +225,45 @@ const unlockedCount = computed(
           </section>
         </div>
       </div>
+
+      <section class="panel">
+        <div class="panel-title">🎮 Games by mode</div>
+        <p class="tiny muted" style="margin-top: 0">
+          Every game mode OpenDota reports for this account — normal, ranked, Turbo and the rest.
+        </p>
+        <p v-if="modeRows.length === 0" class="tiny muted" style="margin: 0">
+          OpenDota returned no per-mode breakdown for this account yet. Refresh in a minute.
+        </p>
+        <table v-else class="data">
+          <thead>
+            <tr>
+              <th>Mode</th>
+              <th>Games</th>
+              <th>W</th>
+              <th>L</th>
+              <th>Winrate</th>
+              <th>Coverage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in modeRows" :key="row.gameModeId">
+              <td>{{ roster.gameModeName(row.gameModeId) }}</td>
+              <td>{{ row.games }}</td>
+              <td>{{ row.win }}</td>
+              <td>{{ row.lose }}</td>
+              <td>{{ formatPercent(row.winrate) }}</td>
+              <td class="muted">{{ row.recentOnly ? 'last 20 matches' : 'full history' }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="tiny muted" style="margin: 10px 0 0">
+          ℹ️ OpenDota normally hides Turbo, Ability Draft and the event modes behind its
+          "significant matches" filter — DotaDex sends <code>significant=0</code> so every mode is
+          counted at full depth. That filter also catches matches with no recorded winner or hero,
+          so totals can differ by a handful of games. A row marked "last 20 matches" means OpenDota
+          refused the data and only its recent window was available.
+        </p>
+      </section>
 
       <section class="panel">
         <div class="panel-title">🕹️ Recent matches</div>
