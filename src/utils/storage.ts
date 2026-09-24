@@ -27,17 +27,3 @@ export function removeKey(key: string): void {
     /* ignore */
   }
 }
-
-/** Removes every DotaDex key (used by the "nuke my data" button). */
-export function clearAll(): void {
-  try {
-    const keys: string[] = []
-    for (let i = 0; i < localStorage.length; i += 1) {
-      const key = localStorage.key(i)
-      if (key && key.startsWith(PREFIX)) keys.push(key)
-    }
-    keys.forEach((key) => localStorage.removeItem(key))
-  } catch {
-    /* ignore */
-  }
-}

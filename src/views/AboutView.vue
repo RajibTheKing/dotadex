@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { rateLimit, API_BASE, OPENDOTA_SITE } from '@/api/opendota'
 import { useDexStore } from '@/stores/dex'
 
@@ -14,8 +13,6 @@ const nameIdeas = [
   { name: 'Draft Gremlin', blurb: 'For the friend who locks something unhinged at minute zero.' },
   { name: 'All Hero Challenge (Unofficial)', blurb: 'Accurate, but Valve has enough lawyers already.' },
 ]
-
-const keyLoaded = computed(() => dex.apiKey.length > 0)
 </script>
 
 <template>
@@ -94,10 +91,6 @@ const keyLoaded = computed(() => dex.apiKey.length > 0)
           <tbody>
             <tr><th>Base URL</th><td><code>{{ API_BASE }}</code></td></tr>
             <tr>
-              <th>API key</th>
-              <td>{{ keyLoaded ? 'configured in settings' : 'not set (free tier)' }}</td>
-            </tr>
-            <tr>
               <th>Requests left (minute)</th>
               <td>
                 {{ rateLimit.minuteRemaining ?? '—' }}
@@ -114,22 +107,17 @@ const keyLoaded = computed(() => dex.apiKey.length > 0)
           </tbody>
         </table>
         <p class="tiny muted" style="margin-top: 8px">
-          The free tier is about 60 requests/minute and 2 000/day; a free key from
-          <a href="https://www.opendota.com/api-keys" target="_blank" rel="noreferrer">
-            opendota.com/api-keys
-          </a>
-          raises it a lot. Responses are cached (hero stats for 6 hours, matchups for a day), so
-          browsing the dex stays cheap.
+          The free tier allows about 60 requests/minute and 2 000/day. Responses are cached (hero stats
+          for 6 hours, matchups for a day), so browsing the dex stays cheap.
         </p>
       </section>
 
       <section class="panel">
         <div class="panel-title">🔒 Privacy &amp; storage</div>
         <p class="tiny muted">
-          There is no backend. Your account id, API key, cycle queue, trauma list, logged heroes and
-          achievement counters live in <code>localStorage</code> under the <code>dotadex:</code>
-          prefix. Clearing browser data (or the “Nuke my local data” button in Settings) removes
-          everything. Requests go straight from your browser to OpenDota.
+          There is no backend. Your account id, cycle queue, trauma list, logged heroes and achievement
+          counters live in <code>localStorage</code> under the <code>dotadex:</code> prefix. Clearing
+          browser data removes everything. Requests go straight from your browser to OpenDota.
         </p>
         <div class="panel-title" style="margin-top: 14px">🧭 Roadmap ideas</div>
         <ul class="reason-list">

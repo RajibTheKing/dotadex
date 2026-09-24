@@ -96,9 +96,8 @@ a **danger list** of counters.
 | `GET /search?q=` | find a player by nickname |
 | `GET /constants/game_mode` | readable game mode names (cached 7 d) |
 
-Rate limits are roughly **60 requests/minute and 2 000/day** without a key. Paste a free key from
-<https://www.opendota.com/api-keys> into **Settings** to raise that to 1200/min. Responses are cached
-in memory (and `localStorage` for the large ones), and the remaining quota is shown on the stats page.
+Rate limits are roughly **60 requests/minute and 2 000/day**. Responses are cached in memory (and
+`localStorage` for the large ones), and the remaining quota is shown on the stats page.
 
 Account input accepts a raw `account_id`, a **SteamID64** (`7656119…`), or an
 `opendota.com/players/<id>` / `steamcommunity.com/profiles/<id>` URL. Vanity URLs (`/id/name`) need the
@@ -122,9 +121,8 @@ src/
 
 ## Privacy
 
-No backend, no accounts, no analytics. Your account id, API key, cycle queue, trauma list, logged
-heroes and counters live in `localStorage` under the `dotadex:` prefix, and can be wiped from
-**Settings → Nuke my local data**.
+No backend, no accounts, no analytics. Your account id, cycle queue, trauma list, logged heroes and
+counters live in `localStorage` under the `dotadex:` prefix, so clearing browser data wipes them.
 
 ## Roadmap
 

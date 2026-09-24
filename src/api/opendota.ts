@@ -38,17 +38,6 @@ export const rateLimit = reactive({
   dayRemaining: null as number | null,
 })
 
-let apiKey = ''
-
-export function setApiKey(key: string): void {
-  apiKey = key.trim()
-}
-
-/** Optional: a free OpenDota API key raises the limits from 60/min + 2000/day. */
-export function getApiKey(): string {
-  return apiKey
-}
-
 interface GetOptions {
   /** How long a cached response stays fresh. */
   ttlMs?: number
@@ -110,7 +99,6 @@ async function get<T>(
 
   const url = new URL(`${API_BASE}${path}`)
   Object.entries(params).forEach(([name, value]) => url.searchParams.set(name, String(value)))
-  if (apiKey) url.searchParams.set('api_key', apiKey)
 
   let response: Response
   try {
@@ -126,7 +114,7 @@ async function get<T>(
   if (!response.ok) {
     if (response.status === 429) {
       throw new OpenDotaError(
-        'OpenDota rate limit reached (free tier allows 60 requests per minute). Wait a few seconds, or paste a free API key under Settings to unlock 1200/min.',
+        'OpenDota rate limit reached (free tier allows 60 requests per minute). Wait a few seconds, then try again.',
         429,
       )
     }

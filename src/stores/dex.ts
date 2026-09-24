@@ -1,8 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import type { DexCounters } from '@/utils/fun'
-import { readJson, writeJson, clearAll } from '@/utils/storage'
-import { setApiKey as setApiKeyHeader } from '@/api/opendota'
+import { readJson, writeJson } from '@/utils/storage'
 import type { SuggestMode } from '@/utils/suggest'
 
 export interface QueueEntry {
@@ -23,13 +22,12 @@ export interface HistoryEntry {
 const EMPTY_COUNTERS: DexCounters = { rolls: 0, newHeroes: 0, skips: 0, bans: 0, cycles: 0 }
 
 /**
- * Everything the browser remembers between visits: connected account, API key,
- * the cycle queue that guarantees no hero repeats, the trauma list and the
- * silly stat counters.
+ * Everything the browser remembers between visits: connected account, the cycle
+ * queue that guarantees no hero repeats, the trauma list and the silly stat
+ * counters.
  */
 export const useDexStore = defineStore('dex', () => {
   const accountId = ref<number | null>(readJson<number | null>('accountId', null))
-  const apiKey = ref<string>(readJson<string>('apiKey', ''))
   const queue = ref<QueueEntry[]>(readJson<QueueEntry[]>('queue', []))
   const markedPlayed = ref<number[]>(readJson<number[]>('markedPlayed', []))
   const banned = ref<number[]>(readJson<number[]>('banned', []))
@@ -39,10 +37,6 @@ export const useDexStore = defineStore('dex', () => {
 
   // Persist every slice of state automatically.
   watch(accountId, (value) => writeJson('accountId', value))
-  watch(apiKey, (value) => {
-    writeJson('apiKey', value)
-    setApiKeyHeader(value)
-  })
   watch(queue, (value) => writeJson('queue', value), { deep: true })
   watch(markedPlayed, (value) => writeJson('markedPlayed', value), { deep: true })
   watch(banned, (value) => writeJson('banned', value), { deep: true })
@@ -50,19 +44,12 @@ export const useDexStore = defineStore('dex', () => {
   watch(cycle, (value) => writeJson('cycle', value))
   watch(counters, (value) => writeJson('counters', value), { deep: true })
 
-  // Apply a previously stored API key once at start-up.
-  setApiKeyHeader(apiKey.value)
-
   const seenIds = computed(() => queue.value.map((entry) => entry.heroId))
   const bannedIds = computed(() => banned.value)
   const locallyPlayedIds = computed(() => markedPlayed.value)
 
   function setAccountId(value: number | null): void {
     accountId.value = value
-  }
-
-  function setApiKey(value: string): void {
-    apiKey.value = value.trim()
   }
 
   function pushHistory(entry: HistoryEntry): void {
@@ -136,20 +123,8 @@ export const useDexStore = defineStore('dex', () => {
     queue.value = []
   }
 
-  /** Hero of the day changes at midnight, so no need to store it. */
-  function resetLocal(): void {
-    clearAll()
-    queue.value = []
-    markedPlayed.value = []
-    banned.value = []
-    history.value = []
-    cycle.value = 1
-    counters.value = { ...EMPTY_COUNTERS }
-  }
-
   return {
     accountId,
-    apiKey,
     queue,
     markedPlayed,
     banned,
@@ -160,7 +135,6 @@ export const useDexStore = defineStore('dex', () => {
     bannedIds,
     locallyPlayedIds,
     setAccountId,
-    setApiKey,
     registerRoll,
     markPlayed,
     unmarkPlayed,
@@ -170,6 +144,5 @@ export const useDexStore = defineStore('dex', () => {
     unban,
     isBanned,
     startNewCycle,
-    resetLocal,
   }
 })
